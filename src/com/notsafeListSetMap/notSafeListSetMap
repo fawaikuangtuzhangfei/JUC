@@ -1,0 +1,34 @@
+一、请简单介绍一下ArrayList
+	ArrayList本质上是一个Object类型的数组，默认大小为10。
+	在进行add()新增操作时会先调用ensureCapacityInternal()来判断是否以达
+到最大容量，若达到，则进行扩容。
+	扩容的话是采用grow()来扩容的，主要做了以下操作 1.将长度利用移位
+运算扩大为之前的1.5倍 2.将原数组元素利用Arrays.copyOf()将原数组复制到新
+数组中 3，将新元素填充到len+1的位置上；
+	删除元素时是将整个len+1位置上的元素利用System.copyOf()复制到len位置上
+ArrayList是快速失败的，也就是说它在其内部维护了modCount，用来记录更改的次数
+每次要更改结构的时候，都会先将modCount进行比较，如果不一致就会抛出
+ConcurrentModificationException
+
+二、ArrayList线程安全吗？
+	线程不安全，它的增删都没有加锁，在多线程的情况下可能会出错；简单的例子就是
+对于同一个list进行新增操作，先新增边打印,会发现，正常情况下应该是10条，但是仅
+输出了9条
+
+三、如何改进？
+1.通过Vector ->每个方法都加了sychronized锁
+2.通过Collections.sychronizedList()
+3.通过CopyOnWriteArrayList()读写分离的list
+	原理是:将读写分离开来，写的时候加锁，将原数组复制出来一份，在新的位置上进行写，
+写完毕后将旧指针指向新数组(Arrays.copyOf)，读的时候不加锁
+	存在的问题:1.内存为原来的2倍 2.存在读不一致的问题，也就是不会立马读到最新的数据
+	适用于读多写少的情况下，以及对数据及时性要求不高，以及对内存不敏感的
+	
+四、同样的HashSet也是线程不安全的
+	本质上是HashMap，key就是传入的key，value为固定的Object对象
+解决方式:
+可以用CopyOnWriteArraySet来保证线程安全，但是其构造方法其实也是CopyOnWriteArrayList
+也可以用Collections.sychronizedSet()
+
+五、HashMap也是线程不安全的
+可以通过ConcurrentHashMap解决

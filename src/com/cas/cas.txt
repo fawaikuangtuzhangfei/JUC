@@ -1,0 +1,29 @@
+CAS:比较并交换
+	简单来说就是每次操作之前都会将工作内存中的值与主内存中的值进行比较，如果相等
+就进行相应的操作，不相等就一直do while 直到相等
+
+底层是通过sun.misic包下面的unsafe类来实现的，unsafe类可以像c语言一样，直接去
+操纵内存，它里面的所有方法都是用native修饰的本地方法。他可以根据传入的对象以及
+内存偏移量来获取数据。
+在操作系统中，CAS是一条原语，也就是一组指令的集合，并且这组指令具有原子性，不会
+存在数据不一致的问题。
+
+比如AtomicInteger的getAndIncrement()它底层就是调用着unsafe类的getAndAddInt()
+它会传入三个参数，一个是对象本身，另一个是对象的地址偏移量，以及改变的值
+getAndAddInt()里面是一个do while，参数分别为当前对象 地址偏移量 当前值 期望值
+新值，当前值可以通过地址偏移量+当前对象获取到，如果两个相等则进行相应操作
+
+原子引用 -> AtomicReference  eg:AtomicReference<User> userAtomicReference = new AtomicReference<>();
+	可以操作自定义的类 保证原子性
+
+CAS的缺点:
+1.循环时间长 开销大，如果其中的do while一直失败的话 会一直请求，可能给cpu带来
+大开销
+2.只能保证一个共享变量的原子性，多个的时候无法保证，可以用锁来解决
+3.ABA问题，a b都读取到的结果为1 此时b挂机 a操作 a先将1变为2又变成了1 此刻b得到
+cpu时间 将自己的值与内存中的1比较 发现相同，会执行其操作。忽略了中间过程。
+
+ABA问题的解决:
+1.时间戳的原子引用->在后面增加一个版本号，在进行操作的时候会对照版本号是否相同
+相同才可进行操作
+AtomicStampedReference<Integer> stampedReference=new AtomicStampedReference<>(100,1);
